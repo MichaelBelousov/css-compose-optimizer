@@ -1,0 +1,15 @@
+# ts output
+lib/
+
+
+# should prefer ts, any required js files can be unignored after (i.e. !blah.js)
+*.js
+
+# node stuff
+node_modules
+
+# package lock-files
+# I don't believe in committing them (except in production kinda lol) 
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
