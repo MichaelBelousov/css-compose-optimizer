@@ -21,10 +21,11 @@ function parseSource() {
         if (node.type === 'Block') {
             node.children
                 .filter((c): c is csstree.Declaration => c.type === 'Declaration')
-                .forEach(d => coincidence.incPair(d.property, d.value.loc!.source))
+                .forEach(d => coincidence.incPair(d.property, csstree.generate(d.value)))
         }
     });
 
     console.log(coincidence);
 }
 
+parseSource();

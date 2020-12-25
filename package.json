@@ -4,8 +4,9 @@
   "description": "css optimizer/minifier based on composition (extending classes)",
   "main": "lib/index.js",
   "scripts": {
+    "start": "node lib/index.js",
     "build": "tsc -b",
-    "test": "jest"
+    "test": "jest --eventually --i --will --set --this --up"
   },
   "repository": {
     "type": "git",
