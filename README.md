@@ -38,9 +38,116 @@ browser class list handling would need to be done.
 
 ## Theory
 
-Maybe the strongly connected components of a graph where each (class-)rule is a node
+~~Maybe the strongly connected components of a graph where each (class-)rule is a node
 and connected to any other (class-)rules that have a same property value. I need to do
 this part out. I was also thinking a (perhaps weighted) adjacency matrix would be helpful
 to construct and figure out the optimal decomposition of css rules. The goal would be to
-then compose each original class from a union of several of the new optimal classes.
+then compose each original class from a union of several of the new optimal classes.~~
+
+### Graph Approach
+
+Suppose you have the following CSS rules (we can ignore HTML class lists because optimizing those
+trivially follows from optimizing the underlying CSS classes).
+
+```css
+.x {a:0; b:0; m:0}
+.y {a:0; b:0; c:0; d:0}
+.z {c:0; d:0; n:0}
+```
+
+- Let `G` be the graph of vertices `V` and edges `E`.
+- For each class, and for each property of that class, let there be a vertex in `V`.
+
+<svg height="200px" width="200px" viewbox="0 0 120 120">
+  <g class="class-x">
+    <g class="prop-a">
+      <circle class="vert" />
+      <text x="0" y="15" class="label">(x, a)</text>
+    </g>
+    <g class="prop-b">
+      <circle class="vert" />
+      <text x="0" y="35" class="label">(x, b)</text>
+    </g>
+    <g class="prop-m">
+      <circle class="vert" />
+      <text x="0" y="95" class="label">(x, m)</text>
+    </g>
+  </g>
+  <g class="class-y">
+    <g class="prop-a">
+      <circle class="vert" />
+      <text x="50" y="15" class="label">(y, a)</text>
+    </g>
+    <g class="prop-b">
+      <circle class="vert" />
+      <text x="50" y="35" class="label">(y, b)</text>
+    </g>
+    <g class="prop-c">
+      <circle class="vert" />
+      <text x="50" y="55" class="label">(y, c)</text>
+    </g>
+    <g class="prop-d">
+      <circle class="vert" />
+      <text x="50" y="75" class="label">(y, d)</text>
+    </g>
+  </g>
+  <g class="class-z">
+    <g class="prop-c">
+      <circle class="vert" />
+      <text x="100" y="55" class="label">(z, c)</text>
+    </g>
+    <g class="prop-d">
+      <circle class="vert" />
+      <text x="100" y="75" class="label">(z, d)</text>
+    </g>
+    <g class="prop-n">
+      <circle class="vert" />
+      <text x="100" y="115" class="label">(z, n)</text>
+    </g>
+  </g>
+  <g class="strong-edges">
+    <line class="edge-x-y edge-a" x1="20" y1="10" x2="50" y2="10" />
+    <line class="edge-x-y edge-b" x1="20" y1="30" x2="50" y2="30" />
+    <line class="edge-y-z edge-c" x1="70" y1="50" x2="100" y2="50" />
+    <line class="edge-y-z edge-d" x1="70" y1="70" x2="100" y2="70" />
+  </g>
+  <g class="weak-edges">
+    <line class="edge-a-b edge-x" x1="10" y1="15" x2="10" y2="25" />
+    <line class="edge-b-m edge-x" x1="10" y1="35" x2="10" y2="85" />
+    <line class="edge-a-b edge-y" x1="60" y1="15" x2="60" y2="25" />
+    <line class="edge-b-c edge-y" x1="60" y1="35" x2="60" y2="45" />
+    <line class="edge-c-d edge-y" x1="60" y1="55" x2="60" y2="65" />
+    <line class="edge-c-d edge-z" x1="110" y1="55" x2="110" y2="65" />
+    <line class="edge-d-n edge-z" x1="110" y1="75" x2="110" y2="105" />
+  </g>
+  <style>
+  @media (prefers-color-scheme: dark) {
+    .label { fill: white; }
+    .vert { stroke: #777; }
+    .strong-edges   { stroke: white; }
+    .weak-edges   { stroke: #ccc; }
+  } @media (prefers-color-scheme: light) {
+    .label { fill: black; }
+    .vert { stroke: black; }
+    .strong-edges  { stroke: black; }
+    .weak-edges  { stroke: #333; }
+  }
+  .strong-edges { stroke-width: 2px; }
+  .weak-edges { stroke-width: 1.3px; }
+  .vert { stroke-width: 2px; r: 5; }
+  .label { font-size: 7pt; }
+  .prop-a * { /*y: 15;*/ cy: 10 }
+  .prop-b circle { cy: 30; }
+  .prop-c circle { cy: 50; }
+  .prop-d circle { cy: 70; }
+  .prop-m circle { cy: 90; }
+  .prop-n circle { cy: 110; }
+  .class-x * { /*x: 0;*/ cx: 10; }
+  .class-x .vert { fill: red; }
+  .class-y * { /*x: 50;*/ cx: 60; }
+  .class-y .vert { fill: blue; }
+  .class-z * { /*x: 100;*/ cx: 110; }
+  .class-z .vert { fill: green; }
+  </style>
+</svg>
 
