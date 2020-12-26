@@ -52,13 +52,27 @@ trivially follows from optimizing the underlying CSS classes).
 ```css
 .x {a:0; b:0; m:0}
 .y {a:0; b:0; c:0; d:0}
-.z {c:0; d:0; n:0}
+.z {b:0; c:0; d:0; n:0}
 ```
 
 - Let `G` be the graph of vertices `V` and edges `E`.
 - For each class, and for each property of that class, let there be a vertex in `V`.
 
 <svg height="200px" width="200px" viewbox="0 0 120 120">
+
+  <g class="weak-edges x">
+    <line class="edge-a-b edge-x" x1="10" y1="15" x2="10" y2="25" />
+    <line class="edge-b-m edge-x" x1="10" y1="35" x2="10" y2="85" />
+  </g>
+  <g class="weak-edges y">
+    <line class="edge-a-b edge-y" x1="60" y1="15" x2="60" y2="25" />
+    <line class="edge-b-c edge-y" x1="60" y1="35" x2="60" y2="45" />
+    <line class="edge-c-d edge-y" x1="60" y1="55" x2="60" y2="65" />
+  </g>
+  <g class="weak-edges z">
+    <line class="edge-c-d edge-z" x1="110" y1="55" x2="110" y2="65" />
+    <line class="edge-d-n edge-z" x1="110" y1="75" x2="110" y2="105" />
+  </g>
   <g class="class-x">
     <g class="prop-a">
       <circle class="vert" />
@@ -92,6 +106,10 @@ trivially follows from optimizing the underlying CSS classes).
     </g>
   </g>
   <g class="class-z">
+    <g class="prop-b">
+      <circle class="vert" />
+      <text x="100" y="35" class="label">(z, b)</text>
+    </g>
     <g class="prop-c">
       <circle class="vert" />
       <text x="100" y="55" class="label">(z, c)</text>
@@ -108,32 +126,32 @@ trivially follows from optimizing the underlying CSS classes).
   <g class="strong-edges">
     <line class="edge-x-y edge-a" x1="20" y1="10" x2="50" y2="10" />
     <line class="edge-x-y edge-b" x1="20" y1="30" x2="50" y2="30" />
+    <line class="edge-y-z edge-b" x1="70" y1="30" x2="100" y2="30" />
     <line class="edge-y-z edge-c" x1="70" y1="50" x2="100" y2="50" />
     <line class="edge-y-z edge-d" x1="70" y1="70" x2="100" y2="70" />
   </g>
-  <g class="weak-edges">
-    <line class="edge-a-b edge-x" x1="10" y1="15" x2="10" y2="25" />
-    <line class="edge-b-m edge-x" x1="10" y1="35" x2="10" y2="85" />
-    <line class="edge-a-b edge-y" x1="60" y1="15" x2="60" y2="25" />
-    <line class="edge-b-c edge-y" x1="60" y1="35" x2="60" y2="45" />
-    <line class="edge-c-d edge-y" x1="60" y1="55" x2="60" y2="65" />
-    <line class="edge-c-d edge-z" x1="110" y1="55" x2="110" y2="65" />
-    <line class="edge-d-n edge-z" x1="110" y1="75" x2="110" y2="105" />
-  </g>
+
+  <!--
+  NOTE: doing it this way, while much more high level mostly, will
+  be stripped by renderers like github
+  -->
   <style>
   @media (prefers-color-scheme: dark) {
     .label { fill: white; }
     .vert { stroke: #777; }
     .strong-edges   { stroke: white; }
-    .weak-edges   { stroke: #ccc; }
+    .weak-edges  { stroke: rgba(255, 255, 255, 0.1); }
   } @media (prefers-color-scheme: light) {
     .label { fill: black; }
     .vert { stroke: black; }
     .strong-edges  { stroke: black; }
-    .weak-edges  { stroke: #333; }
+    .weak-edges  { stroke: rgba(0, 0, 0, 0.1); }
   }
   .strong-edges { stroke-width: 2px; }
-  .weak-edges { stroke-width: 1.3px; }
+  .weak-edges { stroke-width: 10px; }
+  .weak-edges.x { stroke: rgba(255, 0, 0, 0.1); }
+  .weak-edges.y { stroke: rgba(0, 0, 255, 0.1); }
+  .weak-edges.z { stroke: rgba(0, 255, 0, 0.1); }
   .vert { stroke-width: 2px; r: 5; }
   .label { font-size: 7pt; }
   .prop-a * { /*y: 15;*/ cy: 10 }
@@ -151,3 +169,48 @@ trivially follows from optimizing the underlying CSS classes).
   </style>
 </svg>
 
+- It follows intuitively that since all nodes can be placed in rows and columns,
+  with only horizontal edges, that this is a planar graph, at least for the edges that
+  represent a same property in different CSS rules.
+- The simplicity of this graph probably shows that using a graph to reason about this
+  problem is an over-generalization of the problem domain, and we could use a
+  simpler structure. We will nonetheless proceed
+- Our idea is then to collapse all shared edges one by one from each pair of rules
+
+#### __So then, which is more efficient?__
+
+1. collapsing the maximal shared property wherever possible
+2. collapsing the maximal shared properties
+
+Our minimization criterion is to have the least amount of vertices in the graph,
+also the least amount of property members in all of our classes.
+
+If we try *method 1*, we get the following vertices (expressed as CSS rules):
+
+```CSS
+.xyz {b:0}
+.xy {a:0}
+.yz {c:0; d:0}
+.x {m:0; composes: "xyz xy"}
+.y {composes: "xy xyz yz"}
+.z {n:0; composes: "xyz yz"}
+```
+
+This gives us 6 unique properties total, and 6 rules.
+
+If we try *method 2*, we get the following vertices (expressed as CSS rules):
+
+```CSS
+.xy {a:0;b:0}
+.yz {b:0;c:0;d:0}
+.x {m:0; composes: "xy"}
+.y {composes: "xy yz"}
+.z {n:0; composes "yz"}
+```
+
+Here we get 7 properties and 5 rules.
+
+If we use a simple weight composition function of multiplication, then
+*method 2* is more efficient with a minimal weight of 35, while *method 1*
+results in 36 but less unique properties. Profiling web browsers will result in
+choosing the best trade off.
