@@ -24,7 +24,7 @@ export default class CompositeMap<K extends readonly any[], T>
     callbackfn: (value: T, key: K, map: Map<K, T>) => void,
     thisArg?: any
   ): void {
-    for (const [k, v] of this.entries()) callbackfn.call(thisArg, v, k, this);
+    for (const [k, v] of this) callbackfn.call(thisArg, v, k, this);
   }
 
   get(key: K): T | undefined {
@@ -59,7 +59,7 @@ export default class CompositeMap<K extends readonly any[], T>
   /** @warning this is very slow, it iterates the entire tree */
   get size(): number {
     let size = 0;
-    for (const _ of this.entries()) ++size;
+    for (const _ of this) ++size;
     return size;
   }
 
@@ -88,14 +88,14 @@ export default class CompositeMap<K extends readonly any[], T>
   }
 
   *keys(): IterableIterator<K> {
-    for (const [key] of this.entries()) yield key;
+    for (const [key] of this) yield key;
   }
 
   *values(): IterableIterator<T> {
-    for (const [, value] of this.entries()) yield value;
+    for (const [, value] of this) yield value;
   }
 
-  get [Symbol.toStringTag]() {
+  get [Symbol.toStringTag](): string {
     return this.rootMap[Symbol.toStringTag];
   }
 }

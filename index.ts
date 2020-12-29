@@ -1,23 +1,10 @@
 import csstree from "css-tree";
 import * as fs from "fs";
 import MultiMap from "./MultiMap";
-import { iterConsecutivePairs } from "./utils";
-
-// there's got to be a better name for duplicity in graphs like this?
-class CoincidenceMatrix {
-  private map = new Map<string, Map<string, number>>();
-
-  public incPair(x: string, y: string) {
-    if (!this.map.has(x)) this.map.set(x, new Map<string, number>());
-    const submap = this.map.get(x)!;
-    if (!submap.has(y)) submap.set(y, 0);
-    submap.set(y, submap.get(y)! + 1);
-  }
-}
+import CompositeMap from "./CompositeMap";
+import { iterAllPairs } from "./utils";
 
 function parseSource() {
-  const coincidence = new CoincidenceMatrix();
-
   const classRules = new MultiMap<string, string>();
 
   const STDIN_FILE_DESCRIPTOR = 0;
@@ -46,22 +33,40 @@ function parseSource() {
       }
     }
 
-    //const propIntersections
+    const intersections = new CompositeMap<
+      readonly [string, string],
+      Set<string>
+    >();
     for (const [
       [prevRuleName, prevRuleProps],
       [nextRuleName, nextRuleProps],
-    ] of iterConsecutivePairs(classRules)) {
-      const propIntersection = intersect(prevRuleProps, nextRuleProps);
+    ] of iterAllPairs(classRules)) {
+      intersections.set(
+        [prevRuleName, nextRuleName],
+        intersect(prevRuleProps, nextRuleProps)
+      );
     }
-  }
 
-  console.log(classRules);
+    console.log("intersections");
+    debugMap(intersections);
+    console.log("propertyUsers");
+    debugMap(propertyUsers);
+  }
 }
 
 function intersect<T>(a: Set<T>, b: Set<T>): Set<T> {
   const result = new Set<T>();
   for (const item of a) if (b.has(item)) result.add(item);
   return result;
+}
+
+function debugMap<K, T>(mapOfIters: Map<K, Iterable<T>>) {
+  const strings = ["CompositeMap {"];
+  for (const [key, value] of mapOfIters) {
+    strings.push(`\t${key} => ${[...value]}`);
+  }
+  strings.push("}");
+  console.log(strings.join("\n"));
 }
 
 parseSource();
