@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg version="1.1"
-  xmlns="http://www.w3.org/2000/svg" baseProfile="full" height="200px" width="200px" viewbox="0 0 120 120">
+  xmlns="http://www.w3.org/2000/svg" baseProfile="full" height="400px" width="400px" viewBox="0 0 120 120">
 
   <g class="weak-edges x">
     <line class="edge-a-b edge-x" x1="10" y1="15" x2="10" y2="25" />
@@ -79,7 +79,7 @@
   .weak-edges.x { stroke: rgba(255, 0, 0, 0.1); }
   .weak-edges.y { stroke: rgba(0, 0, 255, 0.1); }
   .weak-edges.z { stroke: rgba(0, 255, 0, 0.1); }
-  .vert { stroke-width: 2px; stroke: black; }
+  .vert { stroke-width: 2px; stroke: gray; }
   .label { font-size: 6pt; fill: black; font-family: arial }
   .class-x .vert { fill: red; }
   .class-y .vert { fill: blue; }
@@ -92,7 +92,6 @@
   }
   @media (prefers-color-scheme: light) {
     .label { fill: black; color: black; }
-    .vert { stroke: black; }
     .strong-edges  { stroke: black; }
     .weak-edges  { stroke: rgba(0, 0, 0, 0.1); }
   }

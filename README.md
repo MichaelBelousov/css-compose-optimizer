@@ -58,8 +58,9 @@ trivially follows from optimizing the underlying CSS classes).
 - Let `G` be the graph of vertices `V` and edges `E`.
 - For each class, and for each property of that class, let there be a vertex in `V`.
 
-![There should be a graph here](/doc/graph.svg)
-
+<p align="center">
+  <img alt="There should be a graph here" src="/doc/graph.svg" width="400" height="400" />
+</p>
 
 - It follows intuitively that since all nodes can be placed in rows and columns,
   with only horizontal edges, that this is a planar graph, at least for the edges that
