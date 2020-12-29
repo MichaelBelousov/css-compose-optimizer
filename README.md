@@ -14,7 +14,7 @@ Replace:
 <div class="b"></div>
 <style type="text/css">
     .a {display: none; opacity: 0; border: 1px;}
-    .b {display: none, opacity: 0, border: 2px;}
+    .b {display: none; opacity: 0, border: 2px;}
 </style>
 ```
 

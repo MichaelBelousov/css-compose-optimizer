@@ -45,30 +45,38 @@ export function compareSets<T>(a: Set<T>, b: Set<T>): SetCompareResult {
 }
 
 // prettier-ignore
-/** third bit is whether it's proper
+/** third bit is whether they're equal
  * second is whether it's a superset (as opposed to subset)
- * third is whether it's intersecting
+ * first is whether it's intersecting
  */
 export enum SetCompareResult {
   // I probably don't need non-proper since the only difference
   // is it might be equal which is already covered
-  Superset        = 0b010,
-  ProperSuperset  = 0b110,
+  Superset        = 0b111,
+  ProperSuperset  = 0b011,
   Disjoint        = 0b000,
   Intersecting    = 0b001,
-  Equal           = 0b000,
-  Subset          = 0b000,
-  ProperSubset    = 0b100,
+  Equal           = 0b101,
+  Subset          = 0b101,
+  ProperSubset    = 0b001,
 }
 
 export namespace SetCompareResult {
-  export function isSuperset(r: SetCompareResult) {
-    return !!(r & 0x010) || r === SetCompareResult.Equal;
+  export function isSuperset(r: SetCompareResult): boolean {
+    return [
+      SetCompareResult.Superset,
+      SetCompareResult.ProperSuperset,
+      SetCompareResult.Equal,
+    ].includes(r);
   }
-  export function isSubset(r: SetCompareResult) {
-    return !(r & 0x010) || r === SetCompareResult.Equal;
+  export function isSubset(r: SetCompareResult): boolean {
+    return [
+      SetCompareResult.Subset,
+      SetCompareResult.ProperSubset,
+      SetCompareResult.Equal,
+    ].includes(r);
   }
-  export function isIntersecting(r: SetCompareResult) {
-    return !!(r & 0x100);
+  export function isIntersecting(r: SetCompareResult): boolean {
+    return !!(r & 0x001);
   }
 }

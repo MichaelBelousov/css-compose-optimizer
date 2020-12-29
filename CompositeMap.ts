@@ -1,3 +1,4 @@
+// TODO: look into prefering/combining https://www.npmjs.com/package/composite-map
 /** a map where each keys can be composite
  */
 export default class CompositeMap<K extends readonly any[], T>
