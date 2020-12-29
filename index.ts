@@ -33,10 +33,13 @@ function parseSource() {
       }
     }
 
-    const intersections = new CompositeMap<
-      readonly [string, string],
-      Set<string>
-    >();
+    /** inverse of propertyUsers */
+    const sharedProperties = new Map<string, string>();
+    for (const [prop, classes] of propertyUsers) {
+      sharedProperties.set(`${[...classes]}`, prop);
+    }
+
+    const intersections = new CompositeMap<[string, string], Set<string>>();
     for (const [
       [prevRuleName, prevRuleProps],
       [nextRuleName, nextRuleProps],
@@ -47,10 +50,25 @@ function parseSource() {
       );
     }
 
-    console.log("intersections");
-    debugMap(intersections);
+    // this might be an NP problem
+    const propCoincidences = new CompositeMap<[string, string], number>();
+    for (const [prop] of propertyUsers)
+      for (const [, props] of classRules)
+        if (props.has(prop))
+          for (const p of props)
+            propCoincidences.set(
+              [prop, p],
+              (propCoincidences.get([prop, p]) ?? 0) + 1
+            );
+
+    //console.log("intersections");
+    //debugMap(intersections);
     console.log("propertyUsers");
     debugMap(propertyUsers);
+    //console.log("sharedProperties");
+    //console.log(sharedProperties);
+    console.log("propCoincidences");
+    console.log(propCoincidences);
   }
 }
 

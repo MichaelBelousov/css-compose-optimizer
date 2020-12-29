@@ -30,7 +30,7 @@ export default class CompositeMap<K extends readonly any[], T>
   get(key: K): T | undefined {
     let cursor: any = this.rootMap;
     for (const subkey of key) {
-      if (!cursor.has(subkey)) break;
+      if (!cursor.has(subkey)) return undefined;
       cursor = cursor.get(subkey)!;
     }
     return cursor;
