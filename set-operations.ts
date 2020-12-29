@@ -4,6 +4,13 @@ export function intersect<T>(a: Set<T>, b: Set<T>): Set<T> {
   return result;
 }
 
+export function union<T>(a: Set<T>, b: Set<T>): Set<T> {
+  const result = new Set<T>();
+  for (const item of a) result.add(item);
+  for (const item of b) result.add(item);
+  return result;
+}
+
 export function compareSets<T>(a: Set<T>, b: Set<T>): SetCompareResult {
   let aHasUnique = false;
   let haveIntersection = false; // FIXME: may be incorrect with empty sets
@@ -15,8 +22,8 @@ export function compareSets<T>(a: Set<T>, b: Set<T>): SetCompareResult {
     const aVal = aIter.next();
     const bVal = bIter.next();
     if (aVal.done || bVal.done) {
-      aHasUnique ||= !aVal.done;
-      bHasUnique ||= !bVal.done;
+      aHasUnique = aHasUnique || !aVal.done;
+      bHasUnique = bHasUnique || !bVal.done;
       // prettier-ignore
       return   haveIntersection &&  aHasUnique &&  bHasUnique ? SetCompareResult.Intersecting
             :  haveIntersection &&  aHasUnique && !bHasUnique ? SetCompareResult.ProperSuperset
@@ -56,10 +63,10 @@ export enum SetCompareResult {
 
 export namespace SetCompareResult {
   export function isSuperset(r: SetCompareResult) {
-    return !!(r & 0x010);
+    return !!(r & 0x010) || r === SetCompareResult.Equal;
   }
   export function isSubset(r: SetCompareResult) {
-    return !(r & 0x010);
+    return !(r & 0x010) || r === SetCompareResult.Equal;
   }
   export function isIntersecting(r: SetCompareResult) {
     return !!(r & 0x100);

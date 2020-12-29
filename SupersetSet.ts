@@ -1,56 +1,65 @@
+import { compareSets, SetCompareResult, union } from "./set-operations";
+
 /** A set of sets, where containing a superset of A is equivalent to
  * membership of A, so inserts of subsets will not grow the container
  */
-export default class SupersetSet<T> implements Set<Set<T>> {
-  private sets = new Set<Set<T>>();
-
+export default class SupersetSet<T> extends Set<Set<T>> {
+  // TODO: should use a weakmap
   /** maps each element to which set owns it */
-  private owners = new Map<T, Set<T>>();
+  /*
+  private owners = new MultiMap<T, Set<T>>();
 
-  add(value: Set<T>): this {
-    throw new Error("Method not implemented.");
+  // copied params from SetConstructor because not having a syntax
+  // for selecting instatiations of generic types is weak sauce
+  public constructor(values?: readonly Set<T>[] | null) {
+    super(values);
+    for (const set of this) {
+      for (const item of set) {
+        this.owners.append(item, set);
+      }
+    }
   }
+  */
 
-  clear(): void {
-    this.sets.clear();
-  }
-
-  delete(value: Set<T>): boolean {
-    return this.sets.delete(value);
-  }
-
-  forEach(
-    callbackfn: (value: Set<T>, value2: Set<T>, set: Set<Set<T>>) => void,
-    thisArg?: any
-  ): void {
-    throw new Error("Method not implemented.");
-  }
-
-  has(value: Set<T>): boolean {
-    throw new Error("Method not implemented.");
-  }
-
-  get size(): number {
-    return this.sets.size;
-  }
-
-  [Symbol.iterator](): IterableIterator<Set<T>> {
-    throw new Error("Method not implemented.");
-  }
-
-  entries(): IterableIterator<[Set<T>, Set<T>]> {
-    throw new Error("Method not implemented.");
-  }
-
-  keys(): IterableIterator<Set<T>> {
-    throw new Error("Method not implemented.");
-  }
-
-  values(): IterableIterator<Set<T>> {
-    throw new Error("Method not implemented.");
-  }
-
-  get [Symbol.toStringTag](): string {
-    return this.sets[Symbol.toStringTag];
+  /***/
+  // LOL: this needs good tests
+  public add(value: Set<T>): this {
+    const iter = this[Symbol.iterator]();
+    let iterVal: ReturnType<typeof iter.next> = {
+      value: new Set<T>(),
+      done: false,
+    };
+    while (true) {
+      iterVal = iter.next();
+      if (iterVal.done) break;
+      const set = iterVal.value;
+      const setCompareResult = compareSets(set, value);
+      if (SetCompareResult.isSuperset(setCompareResult)) {
+        return this;
+      } else if (SetCompareResult.isSubset(setCompareResult)) {
+        this.delete(set);
+        super.add(value);
+        return this;
+      } else if (SetCompareResult.isIntersecting(setCompareResult)) {
+        const intersectors = [set];
+        while (!iterVal.done) {
+          iterVal = iter.next();
+          const set = iterVal.value;
+          const setCompareResult = compareSets(set, value);
+          if (setCompareResult !== SetCompareResult.Disjoint) {
+            intersectors.push(set);
+          }
+        }
+        let aggregateUnion = value;
+        for (const intersector of intersectors) {
+          this.delete(intersector);
+          aggregateUnion = union(intersector, value);
+        }
+        super.add(aggregateUnion);
+        return this;
+      }
+    }
+    super.add(value);
+    return this;
   }
 }

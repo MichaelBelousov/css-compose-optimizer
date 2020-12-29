@@ -4,12 +4,8 @@ import MultiMap from "./MultiMap";
 import CompositeMap from "./CompositeMap";
 import { iterAllPairs, countSetBits } from "./utils";
 import Lazy from "lazy-from";
-import {
-  compareSets,
-  intersect,
-  isSubset,
-  SetCompareResult,
-} from "./set-operations";
+import { compareSets, intersect, SetCompareResult } from "./set-operations";
+import SupersetSet from "./SupersetSet";
 
 function parseSource() {
   const classRules = new MultiMap<string, string>();
@@ -72,7 +68,7 @@ function parseSource() {
               hasNonTrivialCoincidence.add(prop);
           }
 
-    function* validSubsets(set: string[], opts = { minimumSize: 0 }) {
+    function* validPowerset(set: string[], opts = { minimumSize: 0 }) {
       set = set.filter((prop) => hasNonTrivialCoincidence.has(prop));
       // TODO: if set.length > 32, use an object to check element sizes
       const powersetCount = 2 ** set.length;
@@ -90,19 +86,22 @@ function parseSource() {
     }
 
     // need some kind of hashable set keyed structure for efficient checking of subsets
-    const validSubsets = [];
-    for (const [ruleName, props] of classRules) {
-      for (const subset of validSubsets([...props], { minimumSize: 2 })) {
+    const validSubsets = new SupersetSet();
+
+    for (const [, props] of classRules) {
+      for (const subset of validPowerset([...props], { minimumSize: 2 })) {
         for (const [, otherProps] of classRules) {
           if (
             props !== otherProps &&
             SetCompareResult.isSubset(compareSets(subset, otherProps))
           ) {
-            console.log(subset);
+            validSubsets.add(subset);
           }
         }
       }
     }
+
+    console.log(validSubsets);
 
     //console.log("intersections");
     //debugMap(intersections);
