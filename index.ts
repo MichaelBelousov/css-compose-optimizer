@@ -68,7 +68,7 @@ function parseSource() {
               hasNonTrivialCoincidence.add(prop);
           }
 
-    function* validPowerset(set: string[], opts = { minimumSize: 0 }) {
+    function* filteredPowerset(set: string[], opts = { minimumSize: 0 }) {
       set = set.filter((prop) => hasNonTrivialCoincidence.has(prop));
       // TODO: if set.length > 32, use an object to check element sizes
       const powersetCount = 2 ** set.length;
@@ -85,42 +85,28 @@ function parseSource() {
       }
     }
 
-    // need some kind of hashable set keyed structure for efficient checking of subsets
-    const validSubsets = new SupersetSet();
+    const validSubsets = new SupersetSet<string>();
 
-    for (const [, props] of classRules) {
-      for (const subset of validPowerset([...props], { minimumSize: 2 })) {
-        for (const [, otherProps] of classRules) {
+    for (const [, props] of classRules)
+      for (const subset of filteredPowerset([...props], { minimumSize: 2 }))
+        for (const [, otherProps] of classRules)
           if (
             props !== otherProps &&
             SetCompareResult.isSubset(compareSets(subset, otherProps))
-          ) {
+          )
             validSubsets.add(subset);
-          }
+
+    const affectedRules = new MultiMap<Set<string>, string>();
+
+    for (const validSubset of validSubsets)
+      for (const [ruleName, props] of classRules)
+        if (SetCompareResult.isSubset(compareSets(validSubset, props))) {
+          console.log("was subset:", validSubset, props);
+          affectedRules.append(validSubset, ruleName);
         }
-      }
-    }
 
-    console.log(validSubsets);
-
-    //console.log("intersections");
-    //debugMap(intersections);
-    //console.log("propertyUsers");
-    //debugMap(propertyUsers);
-    //console.log("sharedProperties");
-    //console.log(sharedProperties);
-    //console.log("propCoincidences");
-    //console.log(propCoincidences);
+    console.log(affectedRules);
   }
-}
-
-function debugMap<K, T>(mapOfIters: Map<K, Iterable<T>>) {
-  const strings = ["CompositeMap {"];
-  for (const [key, value] of mapOfIters) {
-    strings.push(`\t${key} => ${[...value]}`);
-  }
-  strings.push("}");
-  console.log(strings.join("\n"));
 }
 
 parseSource();
