@@ -133,7 +133,7 @@ trivially follows from optimizing the underlying CSS classes).
 
   <!--
   NOTE: doing it this way, while much more high level mostly, will
-  be stripped by renderers like github
+  be stripped by renderers like github, should probably prefer <img src="*.svg">
   -->
   <style>
   @media (prefers-color-scheme: dark) {
