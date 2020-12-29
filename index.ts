@@ -2,7 +2,14 @@ import csstree from "css-tree";
 import * as fs from "fs";
 import MultiMap from "./MultiMap";
 import CompositeMap from "./CompositeMap";
-import { iterAllPairs } from "./utils";
+import { iterAllPairs, countSetBits } from "./utils";
+import Lazy from "lazy-from";
+import {
+  compareSets,
+  intersect,
+  isSubset,
+  SetCompareResult,
+} from "./set-operations";
 
 function parseSource() {
   const classRules = new MultiMap<string, string>();
@@ -50,32 +57,62 @@ function parseSource() {
       );
     }
 
-    // this might be an NP problem
+    // this is probably an NP-complete problem
+
+    const hasNonTrivialCoincidence = new Set<string>();
     const propCoincidences = new CompositeMap<[string, string], number>();
     for (const [prop] of propertyUsers)
       for (const [, props] of classRules)
         if (props.has(prop))
-          for (const p of props)
-            propCoincidences.set(
-              [prop, p],
-              (propCoincidences.get([prop, p]) ?? 0) + 1
-            );
+          for (const p of props) {
+            const prevCoincidence = propCoincidences.get([prop, p]) ?? 0;
+            propCoincidences.set([prop, p], prevCoincidence + 1);
+            const nontrivialCoincidenceThreshold = 0;
+            if (p !== prop && prevCoincidence > nontrivialCoincidenceThreshold)
+              hasNonTrivialCoincidence.add(prop);
+          }
+
+    function* validSubsets(set: string[], opts = { minimumSize: 0 }) {
+      set = set.filter((prop) => hasNonTrivialCoincidence.has(prop));
+      // TODO: if set.length > 32, use an object to check element sizes
+      const powersetCount = 2 ** set.length;
+      // uses binary number bits as an existence test
+      for (let i = 0; i < powersetCount; ++i) {
+        if (countSetBits(i) < opts.minimumSize) continue;
+        const thisSet = new Set<string>();
+        for (let j = 0; j < set.length; ++j) {
+          if (i & (1 << j)) {
+            thisSet.add(set[j]);
+          }
+        }
+        yield thisSet;
+      }
+    }
+
+    // need some kind of hashable set keyed structure for efficient checking of subsets
+    const validSubsets = [];
+    for (const [ruleName, props] of classRules) {
+      for (const subset of validSubsets([...props], { minimumSize: 2 })) {
+        for (const [, otherProps] of classRules) {
+          if (
+            props !== otherProps &&
+            SetCompareResult.isSubset(compareSets(subset, otherProps))
+          ) {
+            console.log(subset);
+          }
+        }
+      }
+    }
 
     //console.log("intersections");
     //debugMap(intersections);
-    console.log("propertyUsers");
-    debugMap(propertyUsers);
+    //console.log("propertyUsers");
+    //debugMap(propertyUsers);
     //console.log("sharedProperties");
     //console.log(sharedProperties);
-    console.log("propCoincidences");
-    console.log(propCoincidences);
+    //console.log("propCoincidences");
+    //console.log(propCoincidences);
   }
-}
-
-function intersect<T>(a: Set<T>, b: Set<T>): Set<T> {
-  const result = new Set<T>();
-  for (const item of a) if (b.has(item)) result.add(item);
-  return result;
 }
 
 function debugMap<K, T>(mapOfIters: Map<K, Iterable<T>>) {

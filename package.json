@@ -21,6 +21,7 @@
   "dependencies": {
     "@types/css-tree": "^1.0.4",
     "@types/node": "^14.14.16",
-    "css-tree": "^1.1.2"
+    "css-tree": "^1.1.2",
+    "lazy-from": "^1.0.0"
   }
 }

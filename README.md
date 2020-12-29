@@ -214,3 +214,11 @@ If we use a simple weight composition function of multiplication, then
 *method 2* is more efficient with a minimal weight of 35, while *method 1*
 results in 36 but less unique properties. Profiling web browsers will result in
 choosing the best trade off.
+
+### Subsets approach
+
+Naively, for each class, get all possible subclasses with size > 1.
+That gives us an exponential complexity of _O(c &times; 2<sup>n-2</sup>))_ where _c_ is the
+amount of classes and _n_ is the maximum class size.
+We can however probably quicken it by limiting our property test set to those that have high
+co-incidences.

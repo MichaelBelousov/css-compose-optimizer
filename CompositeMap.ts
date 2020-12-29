@@ -27,7 +27,9 @@ export default class CompositeMap<K extends readonly any[], T>
     for (const [k, v] of this) callbackfn.call(thisArg, v, k, this);
   }
 
-  get(key: K): T | undefined {
+  get(key: K): T | undefined;
+  get(key: any[]): Map<any, any>;
+  get(key: K | any[]): T | undefined | Map<any, any> {
     let cursor: any = this.rootMap;
     for (const subkey of key) {
       if (!cursor.has(subkey)) return undefined;
