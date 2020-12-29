@@ -24,17 +24,7 @@ export default class CompositeMap<K extends readonly any[], T>
     callbackfn: (value: T, key: K, map: Map<K, T>) => void,
     thisArg?: any
   ): void {
-    this.rootMap.forEach((submapOrValue, firstkey) => {
-      let key = [firstkey];
-      if (submapOrValue instanceof CompositeMap) {
-        const submap = submapOrValue;
-        submap.forEach((v, k, m) => {
-          callbackfn.call(thisArg, v, (key.concat(k) as any) as K, m);
-        });
-      } else {
-        callbackfn.call(thisArg, submapOrValue, (key as any) as K, this);
-      }
-    });
+    for (const [k, v] of this.entries()) callbackfn.call(thisArg, v, k, this);
   }
 
   get(key: K): T | undefined {
@@ -58,7 +48,7 @@ export default class CompositeMap<K extends readonly any[], T>
   set(key: K, value: T): this {
     let cursor: any = this.rootMap;
     for (const subkey of key.slice(0, -1)) {
-      if (!cursor.has(subkey)) cursor.set(subkey, new CompositeMap<K, T>());
+      if (!cursor.has(subkey)) cursor.set(subkey, new Map<any, any>());
       cursor = cursor.get(subkey);
     }
     const finalSubkey = key[key.length - 1];
@@ -66,42 +56,43 @@ export default class CompositeMap<K extends readonly any[], T>
     return this;
   }
 
+  /** @warning this is very slow, it iterates the entire tree */
   get size(): number {
-    throw new Error("Method not implemented.");
+    let size = 0;
+    for (const _ of this.entries()) ++size;
+    return size;
   }
 
   [Symbol.iterator](): IterableIterator<[K, T]> {
-    throw new Error("Method not implemented.");
+    return this.entries();
   }
 
   entries(): IterableIterator<[K, T]> {
-    return this.entriesHelper([]);
+    return CompositeMap.entriesHelper(this.rootMap);
   }
 
-  private *entriesHelper(keys: any[]): IterableIterator<[K, T]> {
-    for (const [subkey, submapOrValue] of this.rootMap.entries()) {
-      if (submapOrValue instanceof CompositeMap) {
+  private static *entriesHelper<K, T>(
+    map: Map<K, T>,
+    subkeys = [] as any[]
+  ): IterableIterator<[K, T]> {
+    for (const [subkey, submapOrValue] of map.entries()) {
+      const key = subkeys.concat(subkey);
+      if (submapOrValue instanceof Map) {
         const submap = submapOrValue;
-        keys!.push(subkey);
-        yield* submap.entries() as any;
-        keys.pop();
+        yield* CompositeMap.entriesHelper(submap, key);
       } else {
         const value = submapOrValue;
-        yield [(keys as any) as K, value];
+        yield [(key as any) as K, value];
       }
     }
   }
 
   *keys(): IterableIterator<K> {
-    for (const [key] of this.entries()) {
-      yield key;
-    }
+    for (const [key] of this.entries()) yield key;
   }
 
   *values(): IterableIterator<T> {
-    for (const [, value] of this.entries()) {
-      yield value;
-    }
+    for (const [, value] of this.entries()) yield value;
   }
 
   get [Symbol.toStringTag]() {
