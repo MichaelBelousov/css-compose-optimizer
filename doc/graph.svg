@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="UTF-8" standlone="no"?>
-<svg height="200px" width="200px" viewbox="0 0 120 120">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1"
+  xmlns="http://www.w3.org/2000/svg" baseProfile="full" height="200px" width="200px" viewbox="0 0 120 120">
 
   <g class="weak-edges x">
     <line class="edge-a-b edge-x" x1="10" y1="15" x2="10" y2="25" />
@@ -16,51 +17,51 @@
   </g>
   <g class="class-x">
     <g class="prop-a">
-      <circle class="vert" />
+      <circle r="5" cx="10" cy="10" class="vert" />
       <text x="0" y="15" class="label">(x, a)</text>
     </g>
     <g class="prop-b">
-      <circle class="vert" />
+      <circle r="5" cx="10" cy="30" class="vert" />
       <text x="0" y="35" class="label">(x, b)</text>
     </g>
     <g class="prop-m">
-      <circle class="vert" />
+      <circle r="5" cx="10" cy="90" class="vert" />
       <text x="0" y="95" class="label">(x, m)</text>
     </g>
   </g>
   <g class="class-y">
     <g class="prop-a">
-      <circle class="vert" />
+      <circle r="5" cx="60" cy="10" class="vert" />
       <text x="50" y="15" class="label">(y, a)</text>
     </g>
     <g class="prop-b">
-      <circle class="vert" />
+      <circle r="5" cx="60" cy="30" class="vert" />
       <text x="50" y="35" class="label">(y, b)</text>
     </g>
     <g class="prop-c">
-      <circle class="vert" />
+      <circle r="5" cx="60" cy="50" class="vert" />
       <text x="50" y="55" class="label">(y, c)</text>
     </g>
     <g class="prop-d">
-      <circle class="vert" />
+      <circle r="5" cx="60" cy="70" class="vert" />
       <text x="50" y="75" class="label">(y, d)</text>
     </g>
   </g>
   <g class="class-z">
     <g class="prop-b">
-      <circle class="vert" />
+      <circle r="5" cx="110" cy="30" class="vert" />
       <text x="100" y="35" class="label">(z, b)</text>
     </g>
     <g class="prop-c">
-      <circle class="vert" />
+      <circle r="5" cx="110" cy="50" class="vert" />
       <text x="100" y="55" class="label">(z, c)</text>
     </g>
     <g class="prop-d">
-      <circle class="vert" />
+      <circle r="5" cx="110" cy="70" class="vert" />
       <text x="100" y="75" class="label">(z, d)</text>
     </g>
     <g class="prop-n">
-      <circle class="vert" />
+      <circle r="5" cx="110" cy="110" class="vert" />
       <text x="100" y="115" class="label">(z, n)</text>
     </g>
   </g>
@@ -72,40 +73,28 @@
     <line class="edge-y-z edge-d" x1="70" y1="70" x2="100" y2="70" />
   </g>
 
-  <!--
-  NOTE: doing it this way, while much more high level mostly, will
-  be stripped by renderers like github, should probably prefer <img src="*.svg">
-  -->
   <style>
+  .strong-edges { stroke-width: 2px; stroke: black; }
+  .weak-edges { stroke-width: 10px; stroke: rgba(0, 0, 0, 0.1); }
+  .weak-edges.x { stroke: rgba(255, 0, 0, 0.1); }
+  .weak-edges.y { stroke: rgba(0, 0, 255, 0.1); }
+  .weak-edges.z { stroke: rgba(0, 255, 0, 0.1); }
+  .vert { stroke-width: 2px; stroke: black; }
+  .label { font-size: 6pt; fill: black; font-family: arial }
+  .class-x .vert { fill: red; }
+  .class-y .vert { fill: blue; }
+  .class-z .vert { fill: green; }
   @media (prefers-color-scheme: dark) {
-    .label { fill: white; }
+    .label { fill: white; color: white; }
     .vert { stroke: #777; }
     .strong-edges   { stroke: white; }
     .weak-edges  { stroke: rgba(255, 255, 255, 0.1); }
-  } @media (prefers-color-scheme: light) {
-    .label { fill: black; }
+  }
+  @media (prefers-color-scheme: light) {
+    .label { fill: black; color: black; }
     .vert { stroke: black; }
     .strong-edges  { stroke: black; }
     .weak-edges  { stroke: rgba(0, 0, 0, 0.1); }
   }
-  .strong-edges { stroke-width: 2px; }
-  .weak-edges { stroke-width: 10px; }
-  .weak-edges.x { stroke: rgba(255, 0, 0, 0.1); }
-  .weak-edges.y { stroke: rgba(0, 0, 255, 0.1); }
-  .weak-edges.z { stroke: rgba(0, 255, 0, 0.1); }
-  .vert { stroke-width: 2px; r: 5; }
-  .label { font-size: 7pt; }
-  .prop-a * { /*y: 15;*/ cy: 10 }
-  .prop-b circle { cy: 30; }
-  .prop-c circle { cy: 50; }
-  .prop-d circle { cy: 70; }
-  .prop-m circle { cy: 90; }
-  .prop-n circle { cy: 110; }
-  .class-x * { /*x: 0;*/ cx: 10; }
-  .class-x .vert { fill: red; }
-  .class-y * { /*x: 50;*/ cx: 60; }
-  .class-y .vert { fill: blue; }
-  .class-z * { /*x: 100;*/ cx: 110; }
-  .class-z .vert { fill: green; }
   </style>
 </svg>

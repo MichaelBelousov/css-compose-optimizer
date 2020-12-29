@@ -60,6 +60,7 @@ trivially follows from optimizing the underlying CSS classes).
 
 ![There should be a graph here](/doc/graph.svg)
 
+
 - It follows intuitively that since all nodes can be placed in rows and columns,
   with only horizontal edges, that this is a planar graph, at least for the edges that
   represent a same property in different CSS rules.
