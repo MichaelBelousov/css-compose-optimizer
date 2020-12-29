@@ -42,8 +42,9 @@ export default class SupersetSet<T> extends Set<Set<T>> {
         return this;
       } else if (SetCompareResult.isIntersecting(setCompareResult)) {
         const intersectors = [set];
-        while (!iterVal.done) {
+        while (true) {
           iterVal = iter.next();
+          if (iterVal.done) break;
           const set = iterVal.value;
           const setCompareResult = compareSets(set, value);
           if (setCompareResult !== SetCompareResult.Disjoint) {

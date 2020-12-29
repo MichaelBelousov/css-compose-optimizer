@@ -97,4 +97,19 @@ describe("compareSets", () => {
   });
 
   it("disjoint", () => {});
+
+  it("subset", () => {
+    expect(
+      SetCompareResult.isSubset(
+        compareSets(
+          new Set([
+            "display:flex",
+            "justify-content:center",
+            "align-items:center",
+          ]),
+          new Set(["flex-direction:column", "display:flex", "margin:10px 10px"])
+        )
+      )
+    ).toBeFalsy();
+  });
 });

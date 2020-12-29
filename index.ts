@@ -101,7 +101,6 @@ function parseSource() {
     for (const validSubset of validSubsets)
       for (const [ruleName, props] of classRules)
         if (SetCompareResult.isSubset(compareSets(validSubset, props))) {
-          console.log("was subset:", validSubset, props);
           affectedRules.append(validSubset, ruleName);
         }
 

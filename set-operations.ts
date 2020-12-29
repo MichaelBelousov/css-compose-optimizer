@@ -58,7 +58,7 @@ export enum SetCompareResult {
   Intersecting    = 0b001,
   Equal           = 0b101,
   Subset          = 0b101,
-  ProperSubset    = 0b001,
+  ProperSubset    = 0b1001, // HACK: need to better figure out these flags
 }
 
 export namespace SetCompareResult {
@@ -69,6 +69,7 @@ export namespace SetCompareResult {
       SetCompareResult.Equal,
     ].includes(r);
   }
+
   export function isSubset(r: SetCompareResult): boolean {
     return [
       SetCompareResult.Subset,
@@ -76,6 +77,7 @@ export namespace SetCompareResult {
       SetCompareResult.Equal,
     ].includes(r);
   }
+
   export function isIntersecting(r: SetCompareResult): boolean {
     return !!(r & 0x001);
   }
