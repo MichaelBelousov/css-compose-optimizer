@@ -95,10 +95,10 @@ describe("utils", () => {
     // eager eval nested iterators will evaluate nested iterators with realized arrays up to a certain depth
     expect(
       Utils.eagerEvalNestedIter(
-        [[1, 2, 3], [[x, y, z]], [[x, y], [[z]]], [5, [x], 7]],
+        [[1, 2, 3], [[x, y, z]], [[x, y], [[z]]], x, [5, 6, 7]] as any[],
         1
       )
-    ).toEqual([[1, 2, 3], [[x, y, z]], [[x, y], [[z]]], [5, [x], 7]]);
+    ).toEqual([[1, 2, 3], [[x, y, z]], [[x, y], [[z]]], [], [5, 6, 7]]);
   });
 
   it("eagerEvalNestedIter depth = 0", () => {
