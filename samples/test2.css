@@ -1,0 +1,22 @@
+/** isomophic to the first x,y,z example in README.md#GraphApproach*/
+
+.x {
+  flex-direction: column;
+  display: flex;
+  margin: 10px 10px;
+}
+
+.y {
+  flex-direction: row;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.z,
+.w {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}

@@ -3,7 +3,7 @@ import Lazy from "lazy-from";
 import { compareSets, SetCompareResult } from "./set-operations";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import type { WorkerData, WorkerJob } from "./index";
-import SetSets from "./SetSets";
+import SetsSet from "./SetsSet";
 
 if (isMainThread) throw Error("this file is only for workers");
 if (!parentPort) throw Error("parentPort must be defined in the worker");
@@ -36,9 +36,13 @@ parentPort.on("message", (job: WorkerJob) => {
   const { classRules } = job;
 
   for (const [[, props], [, otherProps]] of iterAllPairs(classRules))
-    for (const subset of filteredPowerset([...props], { minimumSize: 2 }))
-      if (SetCompareResult.isSubset(compareSets(subset, otherProps)))
+    for (const subset of filteredPowerset([...props], { minimumSize: 2 })) {
+      if (SetCompareResult.isSubset(compareSets(subset, otherProps))) {
         parentPort!.postMessage([subset]);
+        console.log("posting success");
+      }
+      console.log("subset:", subset);
+    }
   //result.add(subset);
 
   //parentPort!.postMessage(result);

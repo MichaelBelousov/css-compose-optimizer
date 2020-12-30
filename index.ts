@@ -4,7 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import MultiMap from "./MultiMap";
 import CompositeMap from "./CompositeMap";
-import { chunkify, iterAllPairs } from "./utils";
+import { chunkify, eagerEvalNestedIter, iterAllPairs } from "./utils";
 import { compareSets, intersect, SetCompareResult } from "./set-operations";
 import SetsSet from "./SetsSet";
 import { Worker } from "worker_threads";
@@ -26,22 +26,28 @@ async function parseSource() {
   const ast = csstree.parse(src);
 
   csstree.walk(ast, (node) => {
-    if (
-      node.type === "Rule" &&
-      node.prelude.type === "SelectorList" &&
-      node.prelude.children.last()?.type === "ClassSelector"
-    ) {
-      const props = (() => {
-        const result = new Set<string>();
-        node.block.children
-          .filter((c): c is csstree.Declaration => c.type === "Declaration")
-          .map((n: csstree.CssNode) => csstree.generate(n))
-          .each((prop) => result.add(prop));
-        return result;
-      })();
-      classRules.set(csstree.generate(node.prelude), props);
+    if (node.type === "Rule" && node.prelude.type === "SelectorList") {
+      (node.prelude.children as csstree.List<csstree.Selector>).forEach(
+        (selector) => {
+          if (selector.children.last()?.type === "ClassSelector") {
+            const props = (() => {
+              const result = new Set<string>();
+              node.block.children
+                .filter(
+                  (c): c is csstree.Declaration => c.type === "Declaration"
+                )
+                .map((n: csstree.CssNode) => csstree.generate(n))
+                .each((prop) => result.add(prop));
+              return result;
+            })();
+            classRules.set(csstree.generate(selector), props);
+          }
+        }
+      );
     }
   });
+
+  console.log(`viable rule count: ${classRules.size}`);
 
   {
     const propertyUsers = new MultiMap<string, string>();
@@ -49,12 +55,6 @@ async function parseSource() {
       for (const prop of props) {
         propertyUsers.append(prop, ruleName);
       }
-    }
-
-    /** inverse of propertyUsers */
-    const sharedProperties = new Map<string, string>();
-    for (const [prop, classes] of propertyUsers) {
-      sharedProperties.set(`${[...classes]}`, prop);
     }
 
     const intersections = new CompositeMap<[string, string], Set<string>>();
@@ -88,13 +88,14 @@ async function parseSource() {
     const threadCount = Math.ceil(os.cpus().length / 2);
     const threads = new Set<Worker>();
 
-    const jobs = chunkify(classRules, { size: 100 });
+    const jobs = eagerEvalNestedIter(
+      chunkify(classRules, { size: 100 }) as Iterable<[string, Set<string>]>
+    ) as [string, Set<string>][][];
 
     const getNextJob = (): WorkerJob | undefined => {
-      const next = jobs.next();
-      if (!next.done) {
-        const eagerChunk = [...next.value];
-        return { classRules: eagerChunk };
+      const next = jobs.shift();
+      if (next) {
+        return { classRules: next };
       }
     };
 

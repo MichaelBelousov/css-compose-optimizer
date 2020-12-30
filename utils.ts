@@ -112,3 +112,26 @@ export function* chunkify<T>(
     yield iterChunk();
   }
 }
+
+export type NestedIterable<T> = Iterable<T | NestedIterable<T>>;
+export type NestedArray<T> = (T | NestedArray<T>)[];
+
+export function eagerEvalNestedIter<T>(
+  iter: NestedIterable<T>,
+  depth = Infinity
+): NestedArray<T> {
+  const result = [];
+  for (const item of iter) {
+    if (
+      depth > 0 &&
+      typeof item === "object" &&
+      item &&
+      Symbol.iterator in item
+    ) {
+      result.push(eagerEvalNestedIter(item as NestedIterable<T>, depth - 1));
+    } else {
+      result.push(item as T);
+    }
+  }
+  return result;
+}
