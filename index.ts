@@ -19,6 +19,19 @@ export interface WorkerJob {
   classRules: [string, Set<string>][];
 }
 
+export type FromWorkerMessage =
+  | {
+      type: "addSubset";
+      subset: SetsSet;
+    }
+  | {
+      type: "next";
+    };
+
+export type ToWorkerMessage = {
+  job: WorkerJob;
+};
+
 async function parseSource() {
   const classRules = new MultiMap<string, string>();
 
@@ -89,7 +102,8 @@ async function parseSource() {
     const threads = new Set<Worker>();
 
     const jobs = eagerEvalNestedIter(
-      chunkify(classRules, { size: 100 }) as Iterable<[string, Set<string>]>
+      chunkify(classRules, { size: 100 }) as Iterable<[string, Set<string>]>,
+      2
     ) as [string, Set<string>][][];
 
     const getNextJob = (): WorkerJob | undefined => {
@@ -115,11 +129,17 @@ async function parseSource() {
           reject(err);
         });
 
-        thread.on("message", (result: SetsSet) => {
-          for (const subset of result) validSubsets.add(subset);
-          const nextJob = getNextJob();
-          if (nextJob) thread.postMessage(nextJob);
-          else thread.terminate();
+        thread.on("message", (msg: FromWorkerMessage) => {
+          switch (msg.type) {
+            case "addSubset":
+              for (const subset of msg.subset) validSubsets.add(subset);
+              break;
+            case "next":
+              const nextJob = getNextJob();
+              if (nextJob)
+                thread.postMessage({ job: nextJob } as ToWorkerMessage);
+              else thread.terminate();
+          }
         });
 
         thread.on("exit", (code) => {
@@ -131,7 +151,7 @@ async function parseSource() {
           }
         });
 
-        thread.postMessage(job);
+        thread.postMessage({ job } as ToWorkerMessage);
       }
     });
 

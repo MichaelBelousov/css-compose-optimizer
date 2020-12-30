@@ -2,7 +2,12 @@ import { countSetBits, iterAllPairs } from "./utils";
 import Lazy from "lazy-from";
 import { compareSets, SetCompareResult } from "./set-operations";
 import { isMainThread, parentPort, workerData } from "worker_threads";
-import type { WorkerData, WorkerJob } from "./index";
+import type {
+  FromWorkerMessage,
+  ToWorkerMessage,
+  WorkerData,
+  WorkerJob,
+} from "./index";
 import SetsSet from "./SetsSet";
 
 if (isMainThread) throw Error("this file is only for workers");
@@ -30,20 +35,16 @@ function* filteredPowerset(set: Iterable<string>, opts = { minimumSize: 0 }) {
   }
 }
 
-parentPort.on("message", (job: WorkerJob) => {
-  //const result = new DisjointSets<string>();
+parentPort.on("message", (msg: ToWorkerMessage) => {
+  //const result = new SetsSet<string>();
 
-  const { classRules } = job;
+  const { classRules } = msg.job;
 
   for (const [[, props], [, otherProps]] of iterAllPairs(classRules))
-    for (const subset of filteredPowerset([...props], { minimumSize: 2 })) {
-      if (SetCompareResult.isSubset(compareSets(subset, otherProps))) {
-        parentPort!.postMessage([subset]);
-        console.log("posting success");
-      }
-      console.log("subset:", subset);
-    }
+    for (const subset of filteredPowerset([...props], { minimumSize: 2 }))
+      if (SetCompareResult.isSubset(compareSets(subset, otherProps)))
+        parentPort!.postMessage(new SetsSet([subset]));
   //result.add(subset);
 
-  //parentPort!.postMessage(result);
+  parentPort!.postMessage({ type: "next" } as FromWorkerMessage);
 });
