@@ -26,7 +26,11 @@ async function parseSource() {
   const ast = csstree.parse(src);
 
   csstree.walk(ast, (node) => {
-    if (node.type === "Rule") {
+    if (
+      node.type === "Rule" &&
+      node.prelude.type === "SelectorList" &&
+      node.prelude.children.last()?.type === "ClassSelector"
+    ) {
       const props = (() => {
         const result = new Set<string>();
         node.block.children
