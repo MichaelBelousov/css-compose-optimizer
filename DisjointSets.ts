@@ -3,7 +3,7 @@ import { compareSets, SetCompareResult, union } from "./set-operations";
 /** A set of sets, where containing a superset of A is equivalent to
  * membership of A, so inserts of subsets will not grow the container
  */
-export default class SupersetSet<T> extends Set<Set<T>> {
+export default class DisjointSets<T> extends Set<Set<T>> {
   // TODO: should use a weakmap
   /** maps each element to which set owns it */
   /*

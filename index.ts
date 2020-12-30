@@ -1,18 +1,25 @@
 import csstree from "css-tree";
 import * as fs from "fs";
+import * as os from "os";
 import MultiMap from "./MultiMap";
 import CompositeMap from "./CompositeMap";
 import { iterAllPairs, countSetBits } from "./utils";
 import Lazy from "lazy-from";
 import { compareSets, intersect, SetCompareResult } from "./set-operations";
-import SupersetSet from "./SupersetSet";
+import DisjointSets from "./DisjointSets";
 import async from "async";
+import { Worker, isMainThread, parentPort } from "worker_threads";
+
+const STDIN_FILE_DESCRIPTOR = 0;
+
+export interface WorkerData {
+  classRules: MultiMap<string, string>;
+  hasNonTrivialCoincidence: Set<string>;
+}
 
 async function parseSource() {
   const classRules = new MultiMap<string, string>();
 
-  const STDIN_FILE_DESCRIPTOR = 0;
-  const STDOUT_FILE_DESCRIPTOR = 1;
   const src = fs.readFileSync(STDIN_FILE_DESCRIPTOR).toString();
   const ast = csstree.parse(src);
 
@@ -70,59 +77,33 @@ async function parseSource() {
               hasNonTrivialCoincidence.add(prop);
           }
 
-    function* filteredPowerset(set: string[], opts = { minimumSize: 0 }) {
-      set = set.filter((prop) => hasNonTrivialCoincidence.has(prop));
-      // TODO: if set.length > 32, use an object to check element sizes
-      const powersetCount = 2 ** set.length;
-      // uses binary number bits as an existence test
-      for (let i = 0; i < powersetCount; ++i) {
-        if (countSetBits(i) < opts.minimumSize) continue;
-        const thisSet = new Set<string>();
-        for (let j = 0; j < set.length; ++j) {
-          if (i & (1 << j)) {
-            thisSet.add(set[j]);
-          }
-        }
-        if (thisSet.size > 15) console.log(thisSet.size);
-        yield thisSet;
-      }
-    }
-
-    const validSubsets = new SupersetSet<string>();
+    const validSubsets = new DisjointSets<string>();
 
     let progress = 0;
-    let deepProgress = 0;
     const total = classRules.size;
     console.log(`total: ${total}`);
     console.log(`deep: ${classRules.size ** 2}`);
 
-    const result: Set<string>[][][] = await async.map(
-      classRules.entries(),
-      async ([, props]) => {
-        const result = await async.map(
-          filteredPowerset([...props], { minimumSize: 2 }),
-          async (subset) =>
-            await async.map(classRules.entries(), async ([, otherProps]) => {
-              if (
-                props !== otherProps &&
-                SetCompareResult.isSubset(compareSets(subset, otherProps))
-              ) {
-                ++deepProgress;
-                process.stdout.write(
-                  "\r" +
-                    `${deepProgress}/${classRules.size ** 2}`.padStart(30, " ")
-                );
-                return subset;
-              }
-            })
-        );
+    const threadCount = Math.ceil(os.cpus().length / 2);
 
-        ++progress;
-        process.stdout.write("\r" + `${progress}/${total}`.padStart(30, " "));
+    const threads = new Set();
+    for (const classRule of classRules) {
+      const thread = new Worker(__filename, { workerData: {} });
+      threads.add(thread);
+      thread.on("error", (err) => {
+        throw err;
+      });
+      thread.on("message", (result: DisjointSets<string>) => {
+        // typescript error?
+        // @ts-ignore
+        for (const subset in result) validSubsets.add(subset as Set<string>);
+      });
+      thread.on("exit", (err) => {
+        threads.delete(thread);
+      });
+    }
 
-        return result;
-      }
-    );
+    classRules.entries();
 
     console.log(result);
 

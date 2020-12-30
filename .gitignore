@@ -4,6 +4,7 @@ lib/
 
 # should prefer ts, any required js files can be unignored after (i.e. !blah.js)
 *.js
+!jest.config.js
 
 # node stuff
 node_modules

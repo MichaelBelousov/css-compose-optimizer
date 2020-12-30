@@ -62,13 +62,50 @@ const bits_per_nibble: Record<number, number> = {
   8: 1, 9: 2, 10: 2, 11: 3, 12: 2, 13: 3, 14: 3, 15: 4
 };
 
-/** e.g. countSetBits(0b1101) === 3 */
+/** e.g. countSetBits(0b1101) === 3
+ * @warning doesn't work on negatives
+ */
 export function countSetBits(x: number) {
-  if (x === 0xffffffff) return 32;
-  let count = 0;
-  do {
-    count += bits_per_nibble[x & 0xf];
-    x >>>= 4;
-  } while (x > 16);
+  if (x in countSetBits.memoed) return countSetBits.memoed[x];
+  // manually unrolled loop
+  const count =
+    bits_per_nibble[(x >>> 0) & 0xf] +
+    bits_per_nibble[(x >>> 4) & 0xf] +
+    bits_per_nibble[(x >>> 8) & 0xf] +
+    bits_per_nibble[(x >>> 12) & 0xf] +
+    bits_per_nibble[(x >>> 16) & 0xf] +
+    bits_per_nibble[(x >>> 20) & 0xf] +
+    bits_per_nibble[(x >>> 24) & 0xf] +
+    bits_per_nibble[(x >>> 28) & 0xf];
+  countSetBits.memoed[x] = count;
   return count;
+}
+
+export namespace countSetBits {
+  export const memoed: Record<number, number> = { ...bits_per_nibble };
+}
+
+/** turn an iterator into an iterator of chunks of a given size
+ * like python's enumerate
+ * @example for an iterator [a,b,c] produce [[0,a],[1,b],[2,c]]
+ * @warning the chunks must be iterated in order, or behavior is undefined
+ */
+export function* chunkify<T>(iterable: Iterable<T>, opts: { size: number }) {
+  let iterator = iterable[Symbol.iterator]();
+  let val: ReturnType<typeof iterator["next"]>;
+
+  function* iterChunk() {
+    yield val.value;
+    for (let chunkDepth = 1; chunkDepth < opts.size; ++chunkDepth) {
+      val = iterator.next();
+      if (val.done) return;
+      yield val.value;
+    }
+  }
+
+  while (true) {
+    val = iterator.next();
+    if (val.done) return;
+    yield iterChunk();
+  }
 }
