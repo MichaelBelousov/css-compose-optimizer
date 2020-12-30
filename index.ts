@@ -6,11 +6,13 @@ import { iterAllPairs, countSetBits } from "./utils";
 import Lazy from "lazy-from";
 import { compareSets, intersect, SetCompareResult } from "./set-operations";
 import SupersetSet from "./SupersetSet";
+import async from "async";
 
-function parseSource() {
+async function parseSource() {
   const classRules = new MultiMap<string, string>();
 
   const STDIN_FILE_DESCRIPTOR = 0;
+  const STDOUT_FILE_DESCRIPTOR = 1;
   const src = fs.readFileSync(STDIN_FILE_DESCRIPTOR).toString();
   const ast = csstree.parse(src);
 
@@ -81,20 +83,48 @@ function parseSource() {
             thisSet.add(set[j]);
           }
         }
+        if (thisSet.size > 15) console.log(thisSet.size);
         yield thisSet;
       }
     }
 
     const validSubsets = new SupersetSet<string>();
 
-    for (const [, props] of classRules)
-      for (const subset of filteredPowerset([...props], { minimumSize: 2 }))
-        for (const [, otherProps] of classRules)
-          if (
-            props !== otherProps &&
-            SetCompareResult.isSubset(compareSets(subset, otherProps))
-          )
-            validSubsets.add(subset);
+    let progress = 0;
+    let deepProgress = 0;
+    const total = classRules.size;
+    console.log(`total: ${total}`);
+    console.log(`deep: ${classRules.size ** 2}`);
+
+    const result: Set<string>[][][] = await async.map(
+      classRules.entries(),
+      async ([, props]) => {
+        const result = await async.map(
+          filteredPowerset([...props], { minimumSize: 2 }),
+          async (subset) =>
+            await async.map(classRules.entries(), async ([, otherProps]) => {
+              if (
+                props !== otherProps &&
+                SetCompareResult.isSubset(compareSets(subset, otherProps))
+              ) {
+                ++deepProgress;
+                process.stdout.write(
+                  "\r" +
+                    `${deepProgress}/${classRules.size ** 2}`.padStart(30, " ")
+                );
+                return subset;
+              }
+            })
+        );
+
+        ++progress;
+        process.stdout.write("\r" + `${progress}/${total}`.padStart(30, " "));
+
+        return result;
+      }
+    );
+
+    console.log(result);
 
     const affectedRules = new MultiMap<Set<string>, string>();
 

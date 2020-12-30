@@ -19,8 +19,10 @@
   },
   "homepage": "https://github.com/MichaelBelousov/css-compose-optimizer#readme",
   "dependencies": {
+    "@types/async": "^3.2.5",
     "@types/css-tree": "^1.0.4",
     "@types/node": "^14.14.16",
+    "async": "^3.2.0",
     "css-tree": "^1.1.2",
     "lazy-from": "^1.0.0"
   },
