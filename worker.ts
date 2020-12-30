@@ -1,15 +1,16 @@
-import { countSetBits } from "./utils";
+import { countSetBits, iterAllPairs } from "./utils";
 import Lazy from "lazy-from";
 import { compareSets, SetCompareResult } from "./set-operations";
 import { isMainThread, parentPort, workerData } from "worker_threads";
-import type { WorkerData } from "./index";
+import type { WorkerData, WorkerJob } from "./index";
 import DisjointSets from "./DisjointSets";
 
 if (isMainThread) throw Error("this file is only for workers");
 if (!parentPort) throw Error("parentPort must be defined in the worker");
 
-const { classRules, hasNonTrivialCoincidence } = workerData as WorkerData;
+const { hasNonTrivialCoincidence } = workerData as WorkerData;
 
+/** create a list of all possible subsets of a given set */
 function* filteredPowerset(set: Iterable<string>, opts = { minimumSize: 0 }) {
   const elements = Lazy.from(set)
     .filter((prop) => hasNonTrivialCoincidence.has(prop))
@@ -29,19 +30,16 @@ function* filteredPowerset(set: Iterable<string>, opts = { minimumSize: 0 }) {
   }
 }
 
-const result = new DisjointSets<string>();
+parentPort.on("message", (job: WorkerJob) => {
+  //const result = new DisjointSets<string>();
 
-for (const [, props] of classRules) {
-  for (const subset of filteredPowerset([...props], { minimumSize: 2 })) {
-    for (const [, otherProps] of classRules) {
-      if (
-        props !== otherProps &&
-        SetCompareResult.isSubset(compareSets(subset, otherProps))
-      ) {
-        result.add(subset);
-      }
-    }
-  }
-}
+  const { classRules } = job;
 
-parentPort.postMessage(result);
+  for (const [[, props], [, otherProps]] of iterAllPairs(classRules))
+    for (const subset of filteredPowerset([...props], { minimumSize: 2 }))
+      if (SetCompareResult.isSubset(compareSets(subset, otherProps)))
+        parentPort!.postMessage([subset]);
+  //result.add(subset);
+
+  //parentPort!.postMessage(result);
+});

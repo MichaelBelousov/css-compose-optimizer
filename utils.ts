@@ -90,7 +90,10 @@ export namespace countSetBits {
  * @example for an iterator [a,b,c] produce [[0,a],[1,b],[2,c]]
  * @warning the chunks must be iterated in order, or behavior is undefined
  */
-export function* chunkify<T>(iterable: Iterable<T>, opts: { size: number }) {
+export function* chunkify<T>(
+  iterable: Iterable<T>,
+  opts: { size: number }
+): Generator<Generator<T>> {
   let iterator = iterable[Symbol.iterator]();
   let val: ReturnType<typeof iterator["next"]>;
 

@@ -1,20 +1,22 @@
 import csstree from "css-tree";
 import * as fs from "fs";
 import * as os from "os";
+import * as path from "path";
 import MultiMap from "./MultiMap";
 import CompositeMap from "./CompositeMap";
-import { iterAllPairs, countSetBits } from "./utils";
-import Lazy from "lazy-from";
+import { chunkify, iterAllPairs } from "./utils";
 import { compareSets, intersect, SetCompareResult } from "./set-operations";
 import DisjointSets from "./DisjointSets";
-import async from "async";
-import { Worker, isMainThread, parentPort } from "worker_threads";
+import { Worker } from "worker_threads";
 
 const STDIN_FILE_DESCRIPTOR = 0;
 
 export interface WorkerData {
-  classRules: MultiMap<string, string>;
   hasNonTrivialCoincidence: Set<string>;
+}
+
+export interface WorkerJob {
+  classRules: [string, Set<string>][];
 }
 
 async function parseSource() {
@@ -79,33 +81,54 @@ async function parseSource() {
 
     const validSubsets = new DisjointSets<string>();
 
-    let progress = 0;
-    const total = classRules.size;
-    console.log(`total: ${total}`);
-    console.log(`deep: ${classRules.size ** 2}`);
-
     const threadCount = Math.ceil(os.cpus().length / 2);
+    const threads = new Set<Worker>();
 
-    const threads = new Set();
-    for (const classRule of classRules) {
-      const thread = new Worker(__filename, { workerData: {} });
-      threads.add(thread);
-      thread.on("error", (err) => {
-        throw err;
-      });
-      thread.on("message", (result: DisjointSets<string>) => {
-        // typescript error?
-        // @ts-ignore
-        for (const subset in result) validSubsets.add(subset as Set<string>);
-      });
-      thread.on("exit", (err) => {
-        threads.delete(thread);
-      });
-    }
+    const jobs = chunkify(classRules, { size: 100 });
 
-    classRules.entries();
+    const getNextJob = (): WorkerJob | undefined => {
+      const next = jobs.next();
+      if (!next.done) {
+        const eagerChunk = [...next.value];
+        return { classRules: eagerChunk };
+      }
+    };
 
-    console.log(result);
+    await new Promise<void>((resolve, reject) => {
+      for (let i = 0; i < threadCount; ++i) {
+        const job = getNextJob();
+
+        if (!job) break;
+
+        const thread = new Worker(path.join(__dirname, "worker.js"), {
+          workerData: { hasNonTrivialCoincidence } as WorkerData,
+        });
+
+        threads.add(thread);
+
+        thread.on("error", (err) => {
+          reject(err);
+        });
+
+        thread.on("message", (result: DisjointSets<string>) => {
+          for (const subset of result) validSubsets.add(subset);
+          const nextJob = getNextJob();
+          if (nextJob) thread.postMessage(nextJob);
+          else thread.terminate();
+        });
+
+        thread.on("exit", (code) => {
+          console.log(`thread ${i} exited with code: ${code}`);
+          threads.delete(thread);
+          if (threads.size === 0) {
+            console.log("threads finished");
+            resolve();
+          }
+        });
+
+        thread.postMessage(job);
+      }
+    });
 
     const affectedRules = new MultiMap<Set<string>, string>();
 

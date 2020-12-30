@@ -64,4 +64,10 @@ describe("utils", () => {
       Utils.chunkify([1, 2, 3, 4, 5, 6, 7], { size: 3 })
     ).toIterateEqually([[1, 2, 3], [4, 5, 6], [7]]);
   });
+
+  it("chunkify not enough", () => {
+    expect(
+      Utils.chunkify([1, 2, 3, 4, 5, 6, 7], { size: 10 })
+    ).toIterateEqually([[1, 2, 3, 4, 5, 6, 7]]);
+  });
 });
