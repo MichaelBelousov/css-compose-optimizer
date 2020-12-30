@@ -98,7 +98,7 @@ async function parseSource() {
 
     const validSubsets = new SetsSet();
 
-    const threadCount = Math.ceil(os.cpus().length / 2);
+    const threadCount = os.cpus().length - 1 || 1;
     const threads = new Set<Worker>();
 
     const jobs = eagerEvalNestedIter(
