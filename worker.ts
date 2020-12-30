@@ -3,7 +3,7 @@ import Lazy from "lazy-from";
 import { compareSets, SetCompareResult } from "./set-operations";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import type { WorkerData, WorkerJob } from "./index";
-import DisjointSets from "./DisjointSets";
+import SetSets from "./SetSets";
 
 if (isMainThread) throw Error("this file is only for workers");
 if (!parentPort) throw Error("parentPort must be defined in the worker");

@@ -23,7 +23,7 @@
     "@types/css-tree": "^1.0.4",
     "@types/node": "^14.14.16",
     "css-tree": "^1.1.2",
-    "lazy-from": "^1.0.0"
+    "lazy-from": "^1.0.1"
   },
   "devDependencies": {
     "@types/jest": "^26.0.19",

@@ -6,7 +6,7 @@ import MultiMap from "./MultiMap";
 import CompositeMap from "./CompositeMap";
 import { chunkify, iterAllPairs } from "./utils";
 import { compareSets, intersect, SetCompareResult } from "./set-operations";
-import DisjointSets from "./DisjointSets";
+import SetsSet from "./SetsSet";
 import { Worker } from "worker_threads";
 
 const STDIN_FILE_DESCRIPTOR = 0;
@@ -83,7 +83,7 @@ async function parseSource() {
               hasNonTrivialCoincidence.add(prop);
           }
 
-    const validSubsets = new DisjointSets<string>();
+    const validSubsets = new SetsSet();
 
     const threadCount = Math.ceil(os.cpus().length / 2);
     const threads = new Set<Worker>();
@@ -114,7 +114,7 @@ async function parseSource() {
           reject(err);
         });
 
-        thread.on("message", (result: DisjointSets<string>) => {
+        thread.on("message", (result: SetsSet) => {
           for (const subset of result) validSubsets.add(subset);
           const nextJob = getNextJob();
           if (nextJob) thread.postMessage(nextJob);
