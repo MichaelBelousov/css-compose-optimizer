@@ -36,15 +36,19 @@ function* filteredPowerset(set: Iterable<string>, opts = { minimumSize: 0 }) {
 }
 
 parentPort.on("message", (msg: ToWorkerMessage) => {
-  //const result = new SetsSet<string>();
+  const result = new SetsSet();
 
   const { classRules } = msg.job;
 
   for (const [[, props], [, otherProps]] of iterAllPairs(classRules))
     for (const subset of filteredPowerset([...props], { minimumSize: 2 }))
       if (SetCompareResult.isSubset(compareSets(subset, otherProps)))
-        parentPort!.postMessage(new SetsSet([subset]));
-  //result.add(subset);
+        result.add(subset);
+
+  parentPort!.postMessage({
+    type: "addSubset",
+    subset: result,
+  } as FromWorkerMessage);
 
   parentPort!.postMessage({ type: "next" } as FromWorkerMessage);
 });

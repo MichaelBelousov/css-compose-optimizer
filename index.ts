@@ -82,6 +82,7 @@ async function parseSource() {
     }
 
     // this is probably an NP-complete problem
+    // that or it's just gzip and or huffman encoding and I haven't relooked at those
 
     const hasNonTrivialCoincidence = new Set<string>();
     const propCoincidences = new CompositeMap<[string, string], number>();
@@ -143,6 +144,7 @@ async function parseSource() {
         });
 
         thread.on("exit", (code) => {
+          // TODO: hide these behind an environment variable ala debug module
           console.log(`thread ${i} exited with code: ${code}`);
           threads.delete(thread);
           if (threads.size === 0) {
@@ -155,6 +157,13 @@ async function parseSource() {
       }
     });
 
+    console.log("validSubsets");
+    for (const [key] of validSubsets) {
+      process.stdout.write(key);
+      process.stdout.write(",");
+    }
+    process.stdout.write("\n");
+
     const affectedRules = new MultiMap<Set<string>, string>();
 
     for (const validSubset of validSubsets)
@@ -163,7 +172,19 @@ async function parseSource() {
           affectedRules.append(validSubset, ruleName);
         }
 
-    console.log(affectedRules);
+    console.log("affectedRules");
+    for (const [key, value] of affectedRules) {
+      for (const set of key) {
+        process.stdout.write(set);
+        process.stdout.write(",");
+      }
+      process.stdout.write("\n=> ");
+      for (const ruleName of value) {
+        process.stdout.write(ruleName);
+        process.stdout.write(",");
+      }
+      process.stdout.write("\n");
+    }
   }
 }
 
